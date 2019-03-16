@@ -6,5 +6,5 @@
 
 compile_commands.json
 **/build/*
-tag
+tags*
 Session.vim
