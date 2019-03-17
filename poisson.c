@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < counts[rank]; i++)
 #       pragma omp parallel for
         for (int j = 0; j < m; j++)
-            b[i][j] = h * h * rhs(grid[displs[rank] + i], grid[j]);
+            b[i][j] = h * h * rhs(grid[displs[rank] + i+1], grid[j+1]);
 
     /* Compute ~G^T = S^-1 * (S * G)^T  (Chapter 9. page 101 step 1) */
     for (int i = 0; i < counts[rank]; i++)
@@ -71,22 +71,22 @@ int main(int argc, char** argv)
         for (int j = 0; j < m; j++)
             u_max = u_max > fabs(b[i][j]) ? u_max : fabs(b[i][j]);
 
-    /* double max_err = 0; */
-    /* for (int i = 0; i < counts[rank]; i++) */
-    /*     for (int j = 0; j < m; j++) { */
-    /*         double err = fabs(b[i][j] - f(i, j)); */
-    /*         max_err = max_err > err ? max_err : err; */
-    /*     } */
-    /*  */
-    /* double global_max_err; */
-    /* MPI_Reduce(&max_err, &global_max_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD); */
-    /* if (rank == 0) */
-    /*     printf("max err     :  %f\n", global_max_err); */
+    double global_u_max;
+    MPI_Reduce(&u_max, &global_u_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    double global_max;
-    MPI_Reduce(&u_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    /* Compute maximal error between points between our solution and the analytical solution */
+    double e_max = 0;
+    for (int i = 0; i < counts[rank]; i++)
+        for (int j = 0; j < m; j++) {
+            double analytical = u(grid[displs[rank] + i+1], grid[j+1]);
+            double err = fabs(b[i][j] - analytical);
+            e_max = e_max > err ? e_max : err;
+        }
 
-    finalize(global_max, start_time, rank, m);
+    double global_e_max;
+    MPI_Reduce(&e_max, &global_e_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+    finalize(global_u_max, global_e_max, start_time, rank, m);
 
     return 0;
 }

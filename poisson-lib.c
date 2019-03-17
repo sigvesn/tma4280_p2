@@ -41,13 +41,14 @@ int argparse(int argc, char** argv, int* n, int* m, int* nn, real* h, int* size,
 }
 
 // Finalize MPI and print results
-void finalize(double u_max, double start_time, int rank, int m)
+void finalize(double u_max, double e_max, double start_time, int rank, int m)
 {
 
     if (rank == 0) {
         double duration = (MPI_Wtime() - start_time);
         printf("Duration:       %f\n", duration);
         printf("Numerical max:  %f\n", u_max);
+        printf("Error max:      %f\n", e_max);
 
         /* double a_max = 0.0; */
         /* for (int i = 0; i < m; i++) */
@@ -91,7 +92,7 @@ real rhs(real x, real y)
     return 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
 }
 
-real f(real x, real y)
+real u(real x, real y)
 {
     return sin(PI * x) * sin(2 * PI * y);
 }
@@ -116,8 +117,8 @@ void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank
         rdispls[i] = rdispls[i - 1] + counts[rank];
         recvcounts[i - 1] = counts[rank];
     }
-    printf("recvcounts[%d]: %d\n", rank, recvcounts[rank]);
-    printf("rdispls[%d]: %d\n", rank + 1, rdispls[rank + 1]);
+    /* printf("recvcounts[%d]: %d\n", rank, recvcounts[rank]); */
+    /* printf("rdispls[%d]: %d\n", rank + 1, rdispls[rank + 1]); */
 
     // for each element in the process matrix part (we filthe overflow elements from the back, so the last element will be equal to or the largest)
     for (int i = 0; i < counts[size - 1]; i++) {
