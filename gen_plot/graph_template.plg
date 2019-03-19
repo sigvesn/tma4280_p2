@@ -1,0 +1,27 @@
+#!/usr/bin/gnuplot -persist
+
+GNUTERM = "x11"
+
+set logscale x 10
+#set logscale y 10
+set format x '10^{%L}'
+set format y '%f'
+
+# set yrange [ 1.00000e-08 : 0.03 ] noreverse nowriteback
+# set xrange [ 10: 10000 ]          noreverse nowriteback
+set autoscale
+
+set xlabel 'n'
+set ylabel 'Time'
+
+load '~/gnuplot-colorbrewer/qualitative/Paired.plt'
+
+plot 'plotdata/aggregate_p16.txt'  using ($1**2):2 ls 6 with linespoints title 'P = x'  #,\
+     # 'plotdata/aggregate_p2.txt'  using 1:4 ls 2 with lines title 'P = 2'  ,\
+     # 'plotdata/aggregate_p4.txt'  using 1:4 ls 3 with lines title 'P = 4'  ,\
+     # 'plotdata/aggregate_p8.txt'  using 1:4 ls 4 with lines title 'P = 8'  ,\
+     # 'plotdata/aggregate_p16.txt' using 1:4 ls 5 with lines title 'P = 16' ,\
+     # 'plotdata/aggregate_p32.txt' using 1:4 ls 6 with lines title 'P = 32'
+
+
+# EOF

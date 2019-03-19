@@ -58,12 +58,12 @@ int main(int argc, char** argv)
 
     /* Compute U = S^-1 * (S * ~U^T)    (Chapter 9. page 101 step 3) */
     for (int i = 0; i < counts[rank]; i++)
-        fst_(bt[i], &n, z[i], &nn);
+        fst_(bt[i], (int*) &n, z[i], (int*) &nn);
 
     transpose(b, bt, counts, displs, size, rank);
 
     for (int i = 0; i < counts[rank]; i++)
-        fstinv_(b[i], &n, z[i], &nn);
+        fstinv_(b[i], (int*) &n, z[i], (int*) &nn);
 
     /* Compute maximal value of solution for convergence analysis in L^∞-norm. */
     double u_max = 0.0;
@@ -86,7 +86,9 @@ int main(int argc, char** argv)
     double global_e_max;
     MPI_Reduce(&e_max, &global_e_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    finalize(global_u_max, global_e_max, start_time, rank, m);
+    finalize(global_u_max, global_e_max, start_time, rank, m, size);
+    free(counts);
+    free(displs);
 
     return 0;
 }

@@ -12,11 +12,11 @@ typedef double real;
 typedef int bool;
 
 int argparse(int argc, char** argv, int* n, int* m, int* nn, real* h, int* size, int* rank, double* time);
-void finalize(double u_max, double e_max, double start_time, int rank, int m);
+void finalize(double u_max, double e_max, double start_time, int rank, int m, int size);
 
-real* mk_1D_array(size_t n, bool zero);
-real** mk_2D_array(size_t n1, size_t n2, bool zero);
-void transpose(real** bt, real** b, int* ncols, int* displ, int size, int rank);
+real* mk_1D_array(int n, bool zero);
+real** mk_2D_array(int n1, int n2, bool zero);
+void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank);
 real rhs(real x, real y);
 real u(real x, real y);
 void gen_limits(int* ncols, int* displ, int rank, int size, int m);

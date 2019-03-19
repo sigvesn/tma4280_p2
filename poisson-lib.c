@@ -40,22 +40,17 @@ int argparse(int argc, char** argv, int* n, int* m, int* nn, real* h, int* size,
     return 3;
 }
 
-// Finalize MPI and print results
-void finalize(double u_max, double e_max, double start_time, int rank, int m)
+ /* Finalize MPI and print results */
+void finalize(double u_max, double e_max, double start_time, int rank, int m, int size)
 {
 
     if (rank == 0) {
-        double duration = (MPI_Wtime() - start_time);
-        printf("Duration:       %f\n", duration);
-        printf("Numerical max:  %f\n", u_max);
-        printf("Error max:      %f\n", e_max);
-
-        /* double a_max = 0.0; */
-        /* for (int i = 0; i < m; i++) */
-        /*     for (int j = 0; j < m; j++) */
-        /*         a_max = a_max > fabs(f(i, j)) ? a_max : fabs(f(i, j)); */
-        /*  */
-        /* printf("Analytical max: %f\n", a_max); */
+        double duration = MPI_Wtime() - start_time;
+        printf("nprocs = %d\n", size);
+        printf("n = %d\n", m + 1);
+        printf("time = %f\n", duration);
+        printf("numerical max = %e\n", u_max);
+        printf("error max = %e\n", e_max);
     }
 
     MPI_Finalize();
@@ -63,17 +58,17 @@ void finalize(double u_max, double e_max, double start_time, int rank, int m)
 
 void gen_limits(int* counts, int* displs, int rank, int size, int m)
 {
-    //distribute colums imatrixes to mpi processes
+    /* distribute colums imatrixes to mpi processes */
     int part = m / size;
     for (int i = 0; i < size; i++)
         counts[i] = part;
 
-    //columns leftover from dividing
+    /* columns leftover from dividing */
     int overflow = m % size;
     for (int i = 1; i <= overflow; i++)
         counts[size - i]++;
 
-    //each i specifies the displacement of the counts array element i from the start
+    /* each i specifies the displacement of the counts array element i from the start */
     displs[0] = 0;
     for (int i = 1; i < size + 1; i++)
         displs[i] = displs[i - 1] + counts[i - 1];
@@ -92,6 +87,7 @@ real rhs(real x, real y)
     return 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
 }
 
+/* Analytical solution of rhs, used to calculate the error of our numerical solution */
 real u(real x, real y)
 {
     return sin(PI * x) * sin(2 * PI * y);
@@ -117,8 +113,6 @@ void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank
         rdispls[i] = rdispls[i - 1] + counts[rank];
         recvcounts[i - 1] = counts[rank];
     }
-    /* printf("recvcounts[%d]: %d\n", rank, recvcounts[rank]); */
-    /* printf("rdispls[%d]: %d\n", rank + 1, rdispls[rank + 1]); */
 
     // for each element in the process matrix part (we filthe overflow elements from the back, so the last element will be equal to or the largest)
     for (int i = 0; i < counts[size - 1]; i++) {
@@ -139,14 +133,19 @@ void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank
             for (int c = 0; c < counts[rank]; ++c)
                 if (displs[r] + i < displs[r + 1])
                     bt[c][displs[r] + i] = recv_buf[rdispls[r] + c];
+
     }
+
+    free(recv_buf);
+    free(recvcounts);
+    free(rdispls);
 }
 
 /*
  * The allocation of a vectore of size n is done with just allocating an array.
  * The only thing to notice here is the use of calloc to zero the array.
  */
-real* mk_1D_array(size_t n, bool zero)
+real* mk_1D_array(int n, bool zero)
 {
     if (zero) {
         return (real*)calloc(n, sizeof(real));
@@ -163,7 +162,7 @@ real* mk_1D_array(size_t n, bool zero)
  * 3. pointers are set for each row to the address of first element.
  */
 
-real** mk_2D_array(size_t n1, size_t n2, bool zero)
+real** mk_2D_array(int n1, int n2, bool zero)
 {
     // 1
     real** ret = (real**)malloc(n1 * sizeof(real*));
@@ -176,7 +175,7 @@ real** mk_2D_array(size_t n1, size_t n2, bool zero)
     }
 
     // 3
-    for (size_t i = 1; i < n1; i++) {
+    for (int i = 1; i < n1; i++) {
         ret[i] = ret[i - 1] + n2;
     }
     return ret;
