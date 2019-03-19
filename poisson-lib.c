@@ -10,7 +10,7 @@
  *  This function parses command lne arguments and inits n, m and h
  *  It also starts the time measurments and inits MPI variables
  */
-int argparse(int argc, char** argv, int* n, int* m, int* nn, real* h, int* size, int* rank, double* time)
+int argparse(int argc, char** argv, int* n, int* m, int* nn, real* h, int* size, int* rank, double* start_time)
 {
     if (argc < 2) {
         printf("Usage:\n");
@@ -34,21 +34,20 @@ int argparse(int argc, char** argv, int* n, int* m, int* nn, real* h, int* size,
     *h = 1.0 / (*n);
     *nn = 4 * *n;
 
-    if (rank == 0)
-        *time = MPI_Wtime();
+    if (*rank == 0)
+        *start_time = MPI_Wtime();
 
     return 3;
 }
 
- /* Finalize MPI and print results */
+/* Finalize MPI and print results */
 void finalize(double u_max, double e_max, double start_time, int rank, int m, int size)
 {
 
     if (rank == 0) {
-        double duration = MPI_Wtime() - start_time;
         printf("nprocs = %d\n", size);
         printf("n = %d\n", m + 1);
-        printf("time = %f\n", duration);
+        printf("time = %1.2f\n", MPI_Wtime() - start_time);
         printf("numerical max = %e\n", u_max);
         printf("error max = %e\n", e_max);
     }
@@ -72,9 +71,6 @@ void gen_limits(int* counts, int* displs, int rank, int size, int m)
     displs[0] = 0;
     for (int i = 1; i < size + 1; i++)
         displs[i] = displs[i - 1] + counts[i - 1];
-
-    /* printf("counts[%d]: %d\n", rank, counts[rank]); */
-    /* printf("displs[%d]: %d\n", rank + 1, displs[rank + 1]); */
 }
 
 /*
@@ -133,7 +129,6 @@ void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank
             for (int c = 0; c < counts[rank]; ++c)
                 if (displs[r] + i < displs[r + 1])
                     bt[c][displs[r] + i] = recv_buf[rdispls[r] + c];
-
     }
 
     free(recv_buf);

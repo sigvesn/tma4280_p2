@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < counts[rank]; i++)
 #       pragma omp parallel for
         for (int j = 0; j < m; j++)
-            b[i][j] = h * h * rhs(grid[displs[rank] + i+1], grid[j+1]);
+            b[i][j] = h * h * rhs(grid[displs[rank] + i + 1], grid[j + 1]);
 
     /* Compute ~G^T = S^-1 * (S * G)^T  (Chapter 9. page 101 step 1) */
     for (int i = 0; i < counts[rank]; i++)
@@ -58,12 +58,12 @@ int main(int argc, char** argv)
 
     /* Compute U = S^-1 * (S * ~U^T)    (Chapter 9. page 101 step 3) */
     for (int i = 0; i < counts[rank]; i++)
-        fst_(bt[i], (int*) &n, z[i], (int*) &nn);
+        fst_(bt[i], &n, z[i], &nn);
 
     transpose(b, bt, counts, displs, size, rank);
 
     for (int i = 0; i < counts[rank]; i++)
-        fstinv_(b[i], (int*) &n, z[i], (int*) &nn);
+        fstinv_(b[i], &n, z[i], &nn);
 
     /* Compute maximal value of solution for convergence analysis in L^∞-norm. */
     double u_max = 0.0;
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     double e_max = 0;
     for (int i = 0; i < counts[rank]; i++)
         for (int j = 0; j < m; j++) {
-            double analytical = u(grid[displs[rank] + i+1], grid[j+1]);
+            double analytical = u(grid[displs[rank] + i + 1], grid[j + 1]);
             double err = fabs(b[i][j] - analytical);
             e_max = e_max > err ? e_max : err;
         }
