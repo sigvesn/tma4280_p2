@@ -3,25 +3,66 @@
 GNUTERM = "x11"
 
 set logscale x 10
-#set logscale y 10
-set format x '10^{%L}'
-set format y '%f'
+set logscale y 10
 
-# set yrange [ 1.00000e-08 : 0.03 ] noreverse nowriteback
-# set xrange [ 10: 10000 ]          noreverse nowriteback
-set autoscale
+set autoscale xfix
+set offset graph 0.025, graph 0.025, graph 0.025, graph 0.025
+set autoscale yfix
+set offset graph 0.025, graph 0.025, graph 0.025, graph 0.025
 
-set xlabel 'n'
+set xlabel 'n^{2}'
 set ylabel 'Time'
 
-load '~/gnuplot-colorbrewer/qualitative/Paired.plt'
+set key left
 
-plot 'plotdata/aggregate_p16.txt'  using ($1**2):2 ls 6 with linespoints title 'P = x'  #,\
-     # 'plotdata/aggregate_p2.txt'  using 1:4 ls 2 with lines title 'P = 2'  ,\
-     # 'plotdata/aggregate_p4.txt'  using 1:4 ls 3 with lines title 'P = 4'  ,\
-     # 'plotdata/aggregate_p8.txt'  using 1:4 ls 4 with lines title 'P = 8'  ,\
-     # 'plotdata/aggregate_p16.txt' using 1:4 ls 5 with lines title 'P = 16' ,\
-     # 'plotdata/aggregate_p32.txt' using 1:4 ls 6 with lines title 'P = 32'
+load '~/gnuplot-colorbrewer/qualitative/Dark2.plt'
 
+# # ================================== Error ==================================
+#
+# load '~/gnuplot-colorbrewer/qualitative/Paired.plt'
+# set key right
+# set xlabel 'n'
+# set ylabel 'Error'
+# set format x '10^{%L}'
+# set format y '10^{%L}'
+# plot 'plotdata/aggregate_err.txt'  using 1:2 with linespoints ls 6 pt 5 title 'Error' ,\
+#      (1/(x**2)) with lines ls 2 title '1/n^{2}'
 
-# EOF
+# ================================== Timing ==================================
+
+set xlabel 'n^{2}'
+set ylabel 'Time'
+set format x '10^{%L}'
+set format y '10^{%L}'
+plot ((0.00001)*x * log(sqrt(x))) with lines ls 8 title 'n^{2} log(n)'           ,\
+    'plotdata/aggregate_p1.txt'  using ($1**2):2 with linespoints  ls 1 pt 5 title 'P = 1'  ,\
+    'plotdata/aggregate_p2.txt'  using ($1**2):2 with linespoints  ls 2 pt 5 title 'P = 2'  ,\
+    'plotdata/aggregate_p4.txt'  using ($1**2):2 with linespoints  ls 3 pt 5 title 'P = 4'  ,\
+    'plotdata/aggregate_p8.txt'  using ($1**2):2 with linespoints  ls 4 pt 5 title 'P = 8'  ,\
+    'plotdata/aggregate_p16.txt' using ($1**2):2 with linespoints  ls 5 pt 5 title 'P = 16' ,\
+    'plotdata/aggregate_p32.txt' using ($1**2):2 with linespoints  ls 6 pt 5 title 'P = 32'
+
+# ================================== Efficiency ==================================
+
+# set xtics (1,2,4,8,16,32)
+# plot (1) with lines ls 8 title 'ideal'                                                                    ,\
+#      'plotdata/aggregate_n256.txt'   using 1:($3 / ($1 * $2)) with linespoints ls 1 pt 5 title 'n = 256'  ,\
+#      'plotdata/aggregate_n512.txt'   using 1:($3 / ($1 * $2)) with linespoints ls 2 pt 5 title 'n = 512'  ,\
+#      'plotdata/aggregate_n1024.txt'  using 1:($3 / ($1 * $2)) with linespoints ls 3 pt 5 title 'n = 1024' ,\
+#      'plotdata/aggregate_n2048.txt'  using 1:($3 / ($1 * $2)) with linespoints ls 4 pt 5 title 'n = 2048' ,\
+#      'plotdata/aggregate_n4096.txt'  using 1:($3 / ($1 * $2)) with linespoints ls 5 pt 5 title 'n = 4096' ,\
+#      'plotdata/aggregate_n8192.txt'  using 1:($3 / ($1 * $2)) with linespoints ls 6 pt 5 title 'n = 8192' ,\
+#      'plotdata/aggregate_n16384.txt' using 1:($3 / ($1 * $2)) with linespoints ls 7 pt 5 title 'n = 16384'
+
+# ================================== Speedup ==================================
+
+# set xtics (1,2,4,8,16,32)
+# plot (x) with lines ls 8 title 'ideal'                                                             ,\
+#      'plotdata/aggregate_n256.txt'   using 1:($3 / $2) with linespoints ls 1 pt 5 title 'n = 256'  ,\
+#      'plotdata/aggregate_n512.txt'   using 1:($3 / $2) with linespoints ls 2 pt 5 title 'n = 512'  ,\
+#      'plotdata/aggregate_n1024.txt'  using 1:($3 / $2) with linespoints ls 3 pt 5 title 'n = 1024' ,\
+#      'plotdata/aggregate_n2048.txt'  using 1:($3 / $2) with linespoints ls 4 pt 5 title 'n = 2048' ,\
+#      'plotdata/aggregate_n4096.txt'  using 1:($3 / $2) with linespoints ls 5 pt 5 title 'n = 4096' ,\
+#      'plotdata/aggregate_n8192.txt'  using 1:($3 / $2) with linespoints ls 6 pt 5 title 'n = 8192' ,\
+#      'plotdata/aggregate_n16384.txt' using 1:($3 / $2) with linespoints ls 7 pt 5 title 'n = 16384'
+

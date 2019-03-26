@@ -96,35 +96,39 @@ real u(real x, real y)
 
 void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank)
 {
-    // Buffers for recieving data, counterparts tob,counts, and displs
+     /* Buffers for data, counts, and displacements of recieving buffer */
     double* recv_buf = calloc(counts[rank] * size, sizeof(double));
     int* recvcounts = calloc(size, sizeof(int));
     int* rdispls = calloc(size + 1, sizeof(int));
 
-    // In the receiving matrix, we want to
-    // recvcounts is a copy of counts, each process sendsand recieves the same amount of data since their part of the matrix is constant.
-    // rdispls is the displacement of the receiving buffer from the start
+    /* In the receiving matrix, we want to */
+    /* recvcounts is a copy of counts, each process sendsand recieves the same amount of data since their part of the matrix is constant. */
+    /* rdispls is the displacement of the receiving buffer from the start */
     rdispls[0] = 0;
     for (int i = 1; i < size + 1; i++) {
         rdispls[i] = rdispls[i - 1] + counts[rank];
         recvcounts[i - 1] = counts[rank];
     }
 
-    // for each element in the process matrix part (we filthe overflow elements from the back, so the last element will be equal to or the largest)
+    /* for each element in the process matrix part (we filthe overflow elements from the back, so the last element will be equal to or the largest) */
     for (int i = 0; i < counts[size - 1]; i++) {
-        // Send the counts[rank] elements dispaced displs[rank] from b[i] to the correstpoinding recievbuffer in rank.
+
+        /* Send the counts[rank] elements dispaced displs[rank] from b[i] to the correstpoinding recievbuffer in rank. */
         if (i < counts[rank])
             MPI_Alltoallv(b[i], counts, displs, MPI_DOUBLE,
-                recv_buf, recvcounts, rdispls, MPI_DOUBLE, MPI_COMM_WORLD);
-        // if this process matrix part is 1 smaller han the rest, send the last element twice to avoid the reciever waiting forever (could thus be any element in b)
-        else
-            MPI_Alltoallv(b[i - 1], counts, displs, MPI_DOUBLE,
-                recv_buf, recvcounts, rdispls, MPI_DOUBLE, MPI_COMM_WORLD);
+                recv_buf, recvcounts, rdispls, MPI_DOUBLE,
+                MPI_COMM_WORLD);
 
-        // Fill bt with the results from alltoallv such that bt is transposed.
-        // For each column in this ranks generated part of bt, if we are in
-        // range of the displacement: get the prt of the rerecv_buf required to
-        // fill up bt as explained i appendix C.
+        /* if this process matrix part is 1 smaller han the rest, send the last element twice to avoid the reciever waiting forever (could thus be any element in b) */
+        else
+            MPI_Alltoallv(b[0], counts, displs, MPI_DOUBLE,
+                recv_buf, recvcounts, rdispls, MPI_DOUBLE,
+                MPI_COMM_WORLD);
+
+        /* Fill bt with the results from alltoallv such that bt is transposed. */
+        /* For each column in this ranks generated part of bt, if we are in */
+        /* range of the displacement: get the prt of the rerecv_buf required to */
+        /* fill up bt as explained i appendix C. */
         for (int r = 0; r < size; ++r)
             for (int c = 0; c < counts[rank]; ++c)
                 if (displs[r] + i < displs[r + 1])

@@ -12,13 +12,13 @@ int main(int argc, char** argv)
 
     /* Grid points generated with constant mesh size on both x- and y-axis. */
     real* grid = mk_1D_array(n + 1, false);
-#   pragma omp parallel for
+#   pragma omp parallel for schedule(static)
     for (int i = 0; i < n + 1; i++)
         grid[i] = i * h;
 
     /* The diagonal of the eigenvalue matrix of T is set with the eigenvalues */
     real* diag = mk_1D_array(m, false);
-#   pragma omp parallel for
+#   pragma omp parallel for schedule(static)
     for (int j = 0; j < m; j++)
         diag[j] = 2.0 * (1.0 - cos((j + 1) * PI / n));
 
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     /* Initialize the right hand side data for a given rhs function (G). */
     /* We have to add the ranks displacement to the grid calculation */
     for (int i = 0; i < counts[rank]; i++)
-#       pragma omp parallel for
+#       pragma omp parallel for schedule(static)
         for (int j = 0; j < m; j++)
             b[i][j] = h * h * rhs(grid[displs[rank] + i + 1], grid[j + 1]);
 
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     /* Solve  λ * ~U = ~G               (Chapter 9. page 101 step 2) */
     /* We have to add the ranks displacement to find the right diag value */
     for (int i = 0; i < counts[rank]; i++)
-#       pragma omp parallel for
+#       pragma omp parallel for schedule(static)
         for (int j = 0; j < m; j++)
             bt[i][j] = bt[i][j] / (diag[displs[rank] + i] + diag[j]);
 
