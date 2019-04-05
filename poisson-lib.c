@@ -55,9 +55,11 @@ void finalize(double u_max, double e_max, double start_time, int rank, int m, in
     MPI_Finalize();
 }
 
+/* Populates two arrays, counts and displs that are used distributing the work
+ * amonst the running processes */
 void gen_limits(int* counts, int* displs, int rank, int size, int m)
 {
-    /* distribute colums imatrixes to mpi processes */
+    /* distribute colums in matrixes to mpi processes */
     int part = m / size;
     for (int i = 0; i < size; i++)
         counts[i] = part;
@@ -73,11 +75,8 @@ void gen_limits(int* counts, int* displs, int rank, int size, int m)
         displs[i] = displs[i - 1] + counts[i - 1];
 }
 
-/*
- * This function is used for initializing the right-hand side of the equation.
- * Other functions can be defined to swtich between problem definitions.
- */
-
+ /* This function is used for initializing the right-hand side of the equation. */
+ /* Other functions can be defined to swtich between problem definitions. */
 real rhs(real x, real y)
 {
     return 5 * PI * PI * sin(PI * x) * sin(2 * PI * y);
@@ -88,12 +87,10 @@ real u(real x, real y)
 {
     return sin(PI * x) * sin(2 * PI * y);
 }
-/*
- * Write the transpose of b a matrix of R^(m*m) in bt.
- * In parallel the function MPI_Alltoallv is used to map directly the entries
- * stored in the array to the block structure, using displacement arrays.
- */
 
+/* Write the transpose of b a matrix of R^(m*m) in bt. */
+/* In parallel the function MPI_Alltoallv is used to map directly the entries */
+/* stored in the array to the block structure, using displacement arrays. */
 void transpose(real** bt, real** b, int* counts, int* displs, int size, int rank)
 {
      /* Buffers for data, counts, and displacements of recieving buffer */
